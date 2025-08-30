@@ -52,7 +52,7 @@ export default function Page() {
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-
+  const [loading,setloading]=useState(true);
   const [newjd, setNewjd] = useState<any>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
    const [userdata, setUserdata] = useState<UserType>()
@@ -84,6 +84,7 @@ useEffect(() => {
   // Fetch jobs safely
   const getJobs = async () => {
     try {
+      setloading(true)
       const res = await fetch("https://synthora-backend.onrender.com/api/getjobdesc",{
         method:"POST",
          headers: {
@@ -93,6 +94,7 @@ useEffect(() => {
       });
       const data = await res.json();
       setJobs(Array.isArray(data) ? data : []);
+      setloading(false)
     } catch (error) {
       console.error("Error fetching jobs:", error);
       setJobs([]);
@@ -244,7 +246,7 @@ useEffect(() => {
 
               <DialogFooter className="mt-4">
                 <DialogClose asChild>
-                  <Button onClick={handleSubmitJob} type="button" className="w-full">
+                  <Button onClick={handleSubmitJob} type="button" className="w-full bg-orange-500">
                     Save Job
                   </Button>
                 </DialogClose>
@@ -298,6 +300,7 @@ useEffect(() => {
 
       {/* Jobs List */}
       <div className="max-w-12xl mx-auto px-2">
+        {loading ?(<h1 className="text-3xl font-extrabold space-x-3 text-center mt-26">Loading Jobs ...</h1>):(<>
         { jobs.length===0 && <h1 className="text-3xl font-extrabold text-center mt-26">No Job Openings</h1>}
         <HoverEffect
           items={filteredJobs.map((job) => ({
@@ -307,8 +310,8 @@ useEffect(() => {
               <div className="space-y-3 bg-white p-4 rounded-xl shadow-lg text-black">
                 <div className="flex justify-between items-start text-black">
                   <div>
-                    <h2 className="font-bold  text-lg">{job.JobTitle}</h2>
-                    <p className="text-lg font-medium font-inter">{job.ClientName}</p>
+                    <h2 className="font-bold  text-lg">{job.ClientName}</h2>
+                    <p className="text-lg font-medium font-inter">{job.JobTitle}</p>
                   </div>
 
                   {editingJobId === job.id ? (
@@ -388,7 +391,7 @@ useEffect(() => {
                 <p className="text-gray-600 text-sm">
   {job.JobDescription?.length
     ? job.JobDescription.length > 100
-      ? `${job.JobDescription.slice(0, 100)}...`
+      ? `${job.JobDescription.slice(0, 60)}...`
       : job.JobDescription
     : "-"}
 </p>
@@ -410,7 +413,8 @@ useEffect(() => {
               </div>
             ),
           }))}
-        />
+        /></>)}
+        
       </div>
     </div>
   );

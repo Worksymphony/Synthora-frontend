@@ -26,7 +26,7 @@ import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { use } from "react";
 import { useRouter } from "next/navigation";
-import { ThumbsDown, XCircle } from "lucide-react";
+import { NotebookPen, PencilLine, ThumbsDown, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
 /** Types */
@@ -70,8 +70,23 @@ interface Resume {
   fileName: string;
   fileURL: string;
   recruiterid: string;
+  notes?:string;
   uploadedAt: any;
+  recruiterId?:string;
   embedding?: number[];
+}
+type ResumeAssignment = {
+  id: string;
+  recruiterId: string;
+  companyId: string;
+  resumeId: string;
+  companyname: string;
+};
+interface EditedData {
+  Client: string;
+  Position:string;
+  location:string;
+  salary:string;
 }
 
 interface PageProps {
@@ -93,7 +108,10 @@ export default function JobDetailPage({ params }: PageProps) {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [note, setNote] = useState("");
   const [open, setOpen] = useState(false);
-
+  const [open1,setopen1]=useState(false)
+  const [noteModalOpen, setNoteModalOpen] = useState(false);
+const [activeResumeId, setActiveResumeId] = useState<string | null>(null);
+const [candidateNote, setCandidateNote] = useState("");
   const [userId, setUserId] = useState<string>("");
   const [matchResult, setMatchResult] = useState<MatchResultResponse>([]);
   const [jobId, setJobId] = useState<string>(""); // <- keep as string only
@@ -114,7 +132,7 @@ export default function JobDetailPage({ params }: PageProps) {
   const [aiStepIndex, setAiStepIndex] = useState(0); // 0..steps-1
   const [aiProgress, setAiProgress] = useState(0); // 0..100
   const [aiBusy, setAiBusy] = useState(false);
-
+  const [edited,setedited]=useState<EditedData>({Client:'',Position:'',location:'',salary:''})
   const progressPerStep = useMemo(
     () => Math.floor(100 / aiSteps.length),
     [aiSteps.length]
@@ -140,7 +158,7 @@ export default function JobDetailPage({ params }: PageProps) {
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [router,companyId]);
 
   /** Fetch JD on mount + whenever the route id changes */
   useEffect(() => {
@@ -156,6 +174,12 @@ export default function JobDetailPage({ params }: PageProps) {
         if (snapshot.exists()) {
           const jobData = snapshot.data() as Job;
           setJob(jobData);
+          setedited({
+            Client: jobData.ClientName || "",
+            Position: jobData.JobTitle || "",
+            location: jobData.Location || "",
+            salary: jobData.SalaryRange || "",
+          });
 
           if (jobData.matchResult && jobData.matchedResumes?.length) {
             setMatchResult(jobData.matchResult);
@@ -176,8 +200,27 @@ export default function JobDetailPage({ params }: PageProps) {
     };
 
     fetchJob();
-  }, [routeId]);
+  }, [routeId,companyId]);
 
+  const handleCandidateNoteSave = async () => {
+if (!activeResumeId) return;
+try {
+const resumeRef = doc(db, "resumes", activeResumeId);
+await updateDoc(resumeRef, { notes: candidateNote });
+// Optimistic UI update
+setResumes((prev) =>
+prev.map((r) =>
+r.id === activeResumeId ? { ...r, notes: candidateNote } : r
+)
+);
+toast.success("Candidate note saved!");
+setCandidateNote("");
+setNoteModalOpen(false);
+} catch (err) {
+console.error(err);
+toast.error("Failed to save candidate note");
+}
+};
   const saveAdditionalNote = async () => {
     if (!jobId) return;
     try {
@@ -197,9 +240,13 @@ export default function JobDetailPage({ params }: PageProps) {
   /** Firestore fetch resumes by IDs (batched) */
   const getResumes = async (ids: string[]) => {
     if (!ids?.length) return;
+    console.log(companyId)
+    const rec=await fetchRecruiter(companyId)
+    console.log(rec)
     // Firestore `in` queries max 10 IDs — batch if needed
     const chunks: string[][] = [];
     for (let i = 0; i < ids.length; i += 10) chunks.push(ids.slice(i, i + 10));
+    
 
     const all: Resume[] = [];
     for (const batch of chunks) {
@@ -210,7 +257,16 @@ export default function JobDetailPage({ params }: PageProps) {
         id: docSnap.id,
         ...(docSnap.data() as Omit<Resume, "id">),
       }));
-      all.push(...(fetched as Resume[]));
+      const mergedData = (fetched?? []).map((resume: any) => {
+          const assignment = rec.find((a) => a.resumeId === resume.id);
+          return {
+            ...resume,
+            recruiterId: assignment?.recruiterId || null,
+            companyId: assignment?.companyId || null,
+            companyname: assignment?.companyname || null,
+          };
+        });
+      all.push(...(mergedData as Resume[]));
     }
     setResumes(all);
   };
@@ -250,14 +306,11 @@ export default function JobDetailPage({ params }: PageProps) {
       await sleep(350);
       stepDone();
 
-      const res = await fetch(
-        "https://synthora-backend.onrender.com/api/matching/recent",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid: jobId, companyId, userid: userId }),
-        }
-      );
+      const res = await fetch("https://synthora-backend.onrender.com/api/matching/recent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: jobId, companyId, userid: userId }),
+      });
 
       if (!res.ok) throw new Error("Failed to fetch");
       const apiRes = await res.json();
@@ -305,31 +358,27 @@ export default function JobDetailPage({ params }: PageProps) {
       await sleep(350);
       stepDone();
 
-      const res = await fetch(
-        "https://synthora-backend.onrender.com/api/matching",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid: jobId, companyId, userid: userId }),
-        }
-      );
+      const res = await fetch("https://synthora-backend.onrender.com/api/matching", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: jobId, companyId, userid: userId }),
+      });
 
       if (!res.ok) throw new Error("Failed to fetch");
       const apiRes = await res.json();
 
       if (apiRes.status === "limit_exceeded") {
         toast.success(apiRes.message);
+        finishAiOverlay();
+        return;
       }
       if (apiRes.warning) {
-        toast.success(apiRes.warning);
+        toast(`⚠️${apiRes.warning}`);
       }
 
       stepDone();
 
       await sleep(300);
-      if (!Array.isArray(apiRes.data)) {
-        throw new Error("Unexpected API response shape");
-      }
 
       setMatchResult(apiRes.data);
       stepDone();
@@ -350,12 +399,30 @@ export default function JobDetailPage({ params }: PageProps) {
       failAiOverlay();
     }
   };
+   const fetchRecruiter = async (companyId: string): Promise<ResumeAssignment[]> => {
+      try {
+        const q = query(
+          collection(db, "resumeAssignments"),
+          where("companyId", "==", companyId)
+        );
+  
+        const querySnapshot = await getDocs(q);
+  
+        return querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<ResumeAssignment, "id">),
+        }));
+      } catch (error) {
+        console.error("Error fetching recruiter assignments:", error);
+        return [];
+      }
+    };
 
   const updateCandidateStatus = async (
     jobIdParam: string,
     resumeId: string,
     status: "rejected" | "not_interested"
-  ) => {
+  ) => { 
     if (!jobIdParam) return;
     const jobRef = doc(db, "job_descriptions", jobIdParam);
     await updateDoc(jobRef, {
@@ -363,6 +430,18 @@ export default function JobDetailPage({ params }: PageProps) {
     });
     toast.success("Successfully marked candidate");
   };
+  const Editdetail=async()=>{
+    const docref=doc(db,"job_descriptions",jobId)
+    await updateDoc(docref,{
+      ClientName:edited.Client,
+      JobTitle:edited.Position,
+      Location:edited.location,
+      SalaryRange:edited.salary,
+
+    })
+    setopen1(false)
+    
+  }
 
   /** UI */
   if (loading) return <div className="p-6">Loading...</div>;
@@ -371,6 +450,29 @@ export default function JobDetailPage({ params }: PageProps) {
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6 bg-white font-inter rounded-lg shadow-lg relative">
       <div className="mt-4">
+        <Dialog open={open1} onOpenChange={setopen1}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Edit Job Description</DialogTitle>
+            </DialogHeader>
+            
+            <input value={edited.Client} name="Client" onChange={(e)=>{setedited({...edited,[e.target.name]:e.target.value})}} placeholder="Client" type="text" />
+            <input value={edited.Position} name="Position" onChange={(e)=>{setedited({...edited,[e.target.name]:e.target.value})}} placeholder="Position" type="text" />
+            <input value={edited.salary} name="salary" onChange={(e)=>{setedited({...edited,[e.target.name]:e.target.value})}} placeholder="salary" type="text" />
+            <input value={edited.location} name="location" onChange={(e)=>{setedited({...edited,[e.target.name]:e.target.value})}} placeholder="location" type="text" />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setopen1(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={Editdetail}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                Save
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
@@ -397,10 +499,42 @@ export default function JobDetailPage({ params }: PageProps) {
           </DialogContent>
         </Dialog>
       </div>
+      {/* Candidate note dialog */}
+      <Dialog open={noteModalOpen} onOpenChange={setNoteModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add Candidate Note</DialogTitle>
+          </DialogHeader>
+          <textarea
+            className="w-full p-2 border rounded-lg"
+            rows={4}
+            value={candidateNote}
+            onChange={(e) => setCandidateNote(e.target.value)}
+            placeholder="Write note for this candidate..."
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNoteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCandidateNoteSave}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Header */}
       <div className="flex space-x-7 ">
-        <h1 className="text-3xl font-bold text-gray-900">{job.JobTitle}</h1>
+        <h1 className="text-3xl font-bold text-gray-900">{job.ClientName}</h1>
+        <PencilLine
+          onClick={() => setopen1(true)}
+          className=" ml-auto text-orange-500"
+        >
+          
+        </PencilLine>
         <Button
           onClick={() => setOpen(true)}
           className="bg-orange-600 hover:bg-orange-700 ml-auto text-white"
@@ -411,7 +545,7 @@ export default function JobDetailPage({ params }: PageProps) {
 
       <div className="space-y-2 text-gray-700">
         <p>
-          <strong>Client:</strong> {job.ClientName}
+          <strong>Position</strong> {job.JobTitle}
         </p>
         <p>
           <strong>Location:</strong> 📍 {job.Location}
@@ -472,14 +606,31 @@ export default function JobDetailPage({ params }: PageProps) {
               return (
                 <tr key={item.id}>
                   <td className="border px-4 py-2 text-blue-700 w-1/5">
-                    <a
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      href={resume?.fileURL}
-                    >
-                      {resume?.name?.toLocaleUpperCase() || "N/A"}
-                    </a>
-                  </td>
+  <div className="flex flex-col items-start">
+  <div className="flex items-center gap-2">
+    <a
+      target="_blank"
+      rel="noopener noreferrer"
+      href={resume?.fileURL}
+      className="font-semibold"
+    >
+      {resume?.name?.toLocaleUpperCase() || "N/A"}
+    </a>
+
+    <NotebookPen
+      className="text-orange-600 cursor-pointer"
+      onClick={() => {
+        setActiveResumeId(item.id);
+        setCandidateNote(resume?.notes || "");
+        setNoteModalOpen(true);
+      }}
+    />
+  </div>
+</div>
+
+  {resume?.recruiterId && <p className="text-gray-500 text-sm mt-5 italic ">Belongs to: {resume?.recruiterId}</p> }
+</td>
+
                   <td className="border font-extrabold px-4 py-2 w-[10%]">
                     {item.score?.parsed.score ?? "NA"}%
                   </td>
@@ -514,13 +665,20 @@ export default function JobDetailPage({ params }: PageProps) {
                         size="icon"
                         className="text-yellow-600 hover:bg-yellow-100"
                         onClick={() =>
-                          updateCandidateStatus(jobId, item.id, "not_interested")
+                          updateCandidateStatus(
+                            jobId,
+                            item.id,
+                            "not_interested"
+                          )
                         }
                         title="Not Interested"
                       >
                         <ThumbsDown className="h-6 w-6" />
                       </Button>
                     </div>
+                     <p className="text-xs text-gray-500 italic mt-1">
+                    {resume?.notes}
+                  </p>
                   </td>
                 </tr>
               );

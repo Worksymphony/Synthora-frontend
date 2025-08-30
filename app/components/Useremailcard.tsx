@@ -212,14 +212,14 @@ export const UserListCard = () => {
         const deletePromises: Promise<void>[] = [];
         recruitersSnap.forEach(async(recDoc) => {
           deletePromises.push(deleteDoc(doc(db, "users", recDoc.id)));
-           await axios.post("http://localhost:5000/api/deleteAuthUser",{id:recDoc.id})
+           await axios.post("https://synthora-backend.onrender.com/api/deleteAuthUser",{id:recDoc.id})
         });
 
         await Promise.all(deletePromises);
 
         // ✅ Then delete the admin
         await deleteDoc(doc(db, "users", id));
-         await axios.post("http://localhost:5000/api/deleteAuthUser",{id})
+         await axios.post("https://synthora-backend.onrender.com/api/deleteAuthUser",{id})
         toast.success("Admin and all their recruiters deleted successfully!");
 
         // ✅ Update state
@@ -227,7 +227,7 @@ export const UserListCard = () => {
       } else {
         // ✅ Normal recruiter delete
         await deleteDoc(doc(db, "users", id));
-        await axios.post("http://localhost:5000/api/deleteAuthUser",{id})
+        await axios.post("https://synthora-backend.onrender.com/api/deleteAuthUser",{id})
         toast.success("Recruiter deleted successfully!");
 
         setUsers((prev) =>

@@ -65,7 +65,7 @@ const handleSubmit = async (e: FormEvent) => {
 
           <label
             htmlFor="fileUpload"
-            className="flex flex-col items-center justify-center w-full h-30 border-2 border-dashed border-orange-400 rounded-xl cursor-pointer bg-blue-50 hover:bg-blue-100 transition-all"
+            className="flex flex-col items-center justify-center w-full h-30 border-2 border-dashed border-orange-400 rounded-xl cursor-pointer bg-blue-50 hover:bg-blue-100 transition-all animate-glow"
           >
             <svg
               className="w-10 h-10 text-orange-500 mb-2"

@@ -9,7 +9,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <main className="flex-1 overflow-y-auto p-4 ">
         {children}
-         <Toaster position="top-right" reverseOrder={false} />
+         <Toaster position="bottom-right" reverseOrder={false} />
       </main>
     </div>
   );

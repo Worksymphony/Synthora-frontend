@@ -168,7 +168,7 @@ export default function AiReportPage() {
   }
 
   // Calculate total estimated cost
-  const totalEstimatedCost = ((totalUsage / 1000) * COST_PER_1000_TOKENS).toFixed(4);
+  const totalEstimatedCost = ((totalUsage / 1000000) * 0.42).toFixed(2);
 
   return (
     <ScrollArea className="h-full w-full">
@@ -224,7 +224,7 @@ export default function AiReportPage() {
                       {(user.usage ?? 0).toLocaleString()}
                     </td>
                     <td className="border px-4 py-2 font-mono">
-                      ${((user.usage / 1000) * COST_PER_1000_TOKENS).toFixed(4)}
+                      ${((user.usage / 1000000) * 0.42).toFixed(2)}
                     </td>
                   </tr>
                 ))
@@ -279,7 +279,7 @@ export default function AiReportPage() {
                       {admin.totalusage.toLocaleString()}
                     </td>
                     <td className="border px-4 py-2 font-mono">
-                      ${((admin.totalusage / 1000) * COST_PER_1000_TOKENS).toFixed(4)}
+                      ${((admin.totalusage / 1000000) * 0.42).toFixed(2)}
                     </td>
                   </tr>
                 ))

@@ -136,7 +136,7 @@ export function ResumeUploadChart() {
                 />
               }
             />
-            <Bar dataKey="uploads" fill="var(--color-views)" />
+            <Bar dataKey="uploads" fill="#f97316" />
           </BarChart>
         </ChartContainer>
       </CardContent>

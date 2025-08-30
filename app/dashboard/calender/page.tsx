@@ -238,49 +238,97 @@ export default function CalendarTab() {
 
       {/* Custom Calendar Styles */}
       <style jsx global>{`
-        .custom-orange-calendar .rbc-toolbar button {
-          background-color: #f97316;
-          color: white;
-          margin: 10px;
-          border-radius: 12px !important;
-          padding: 4px 10px;
-          transition: background-color 0.2s ease;
-        }
-        .custom-orange-calendar .rbc-toolbar button:hover {
-          background-color: #ea580c;
-        }
-        .custom-orange-calendar .rbc-today {
-  background-color: rgba(249, 115, 22, 0.1) !important; /* light orange */
-}
-.custom-orange-calendar .rbc-month-view,
-.custom-orange-calendar .rbc-time-view,
-.custom-orange-calendar .rbc-day-bg {
-  background-color: #ffffff !important; /* rest all white */
-}
-  .custom-orange-calendar .rbc-month-view,
-.custom-orange-calendar .rbc-time-view,
-.custom-orange-calendar .rbc-day-bg {
-  background-color: #ffffff !important;
-}
+  /* --- Calendar Wrapper --- */
+  .custom-orange-calendar {
+    font-family: 'Inter', sans-serif;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+  }
 
-/* Override only today's cell */
-.custom-orange-calendar .rbc-day-bg.rbc-today {
-  background-color: rgba(249, 115, 22, 0.1) !important; /* light orange */
-}
-        .custom-orange-calendar .rbc-month-view,
-        .custom-orange-calendar .rbc-time-view,
-        .custom-orange-calendar .rbc-day-bg {
-          background-color: #ffffff !important;
-        }
-        .custom-orange-calendar .rbc-event {
-          background-color: #f97316;
-          border-radius: 6px;
-          padding: 2px 6px;
-        }
-        .custom-orange-calendar .rbc-event:hover {
-          transform: scale(1.03);
-        }
-      `}</style>
+  /* --- Toolbar --- */
+  .custom-orange-calendar .rbc-toolbar {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-bottom: none;
+  }
+  .custom-orange-calendar .rbc-toolbar button {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb; /* gray-200 */
+    background: #fff;
+    color: #374151; /* gray-700 */
+    transition: all 0.2s ease;
+  }
+  .custom-orange-calendar .rbc-toolbar button:hover {
+    background: #fef3c7; /* amber-100 */
+    color: #f97316; /* orange-500 */
+  }
+  .custom-orange-calendar .rbc-toolbar button.rbc-active {
+    background: #f97316; /* orange-500 */
+    color: #fff;
+    border-color: #f97316;
+  }
+
+  /* --- Month View Grid --- */
+  .custom-orange-calendar .rbc-month-view {
+    border: none;
+  }
+  .custom-orange-calendar .rbc-month-row {
+    border: none;
+  }
+  .custom-orange-calendar .rbc-date-cell {
+    padding: 0.75rem;
+    text-align: right;
+    font-weight: 600;
+    color: #374151;
+  }
+  .custom-orange-calendar .rbc-date-cell > a {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: inherit;
+  }
+  .custom-orange-calendar .rbc-off-range {
+    color: #d1d5db; /* gray-400 */
+  }
+  .custom-orange-calendar .rbc-day-bg {
+    border: 1px solid #f3f4f6; /* gray-100 */
+    border-radius: 12px;
+    transition: background 0.2s ease;
+  }
+  .custom-orange-calendar .rbc-day-bg:hover {
+    background: #fff7ed; /* orange-50 */
+  }
+  .custom-orange-calendar .rbc-today {
+    background: #fff7ed !important; /* orange-50 */
+    border: 2px solid #f97316 !important; /* orange-500 */
+  }
+
+  /* --- Events --- */
+  .custom-orange-calendar .rbc-event {
+    background: #f97316;
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: white;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  /* --- Header Row --- */
+  .custom-orange-calendar .rbc-header {
+    border: none;
+    padding: 0.75rem 0;
+    font-weight: 600;
+    color: #6b7280; /* gray-500 */
+    text-transform: uppercase;
+    font-size: 0.75rem;
+  }
+`}</style>
+
     </div>
   );
 }

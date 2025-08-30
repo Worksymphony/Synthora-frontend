@@ -19,11 +19,11 @@ const UploadModal: React.FC<UploadModalProps> = ({handleFileChange,handleSubmit,
         onSubmit={handleSubmit}
         className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl p-8 w-full"
       >
-        <h2 className="text-3xl font-bold text-center text-orange-800 mb-6">Upload Resume(s)</h2>
+        <h2 className="text-3xl font-bold text-center text-orange-800 mb-6">Upload Resumes</h2>
 
         <label
           htmlFor="fileUpload"
-          className="flex flex-col items-center justify-center w-full h-30 border-2 border-dashed border-orange-400 rounded-xl cursor-pointer bg-blue-50 hover:bg-blue-100 transition-all"
+          className="flex flex-col items-center justify-center w-full h-30 border-2 border-dashed border-orange-400 rounded-xl cursor-pointer bg-blue-50 hover:bg-blue-100 transition-all animate-glow"
         >
           <svg
             className="w-10 h-10 text-orange-500 mb-2"
@@ -66,7 +66,7 @@ const UploadModal: React.FC<UploadModalProps> = ({handleFileChange,handleSubmit,
         <div className="flex gap-4 mt-6">
           <button
         type="submit"
-        className="bg-orange-500 text-white px-4 py-2 rounded"
+        className="bg-orange-500 flex-1/2 text-white px-4 py-2 rounded"
         disabled={loading}
       >
         {loading ? "Uploading..." : "Upload"}

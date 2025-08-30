@@ -21,6 +21,7 @@ export default function Sidebar() {
   const [user, setUser] = useState<User | null>(null);
   const [isadmin, setisadmin] = useState(false);
   const [superadmin,setsuperadmin]=useState(false);
+  const [username,setusername]=useState("")
   const router = useRouter();
   const pathname = usePathname();
 
@@ -40,6 +41,9 @@ export default function Sidebar() {
       if (docSnap.exists() && docSnap.data().role==="superadmin"){
         setsuperadmin(true)
       } 
+      if(docSnap.exists()){
+        setusername(docSnap.data().name)
+      }
     });
 
     return () => unsubscribe();
@@ -94,7 +98,7 @@ export default function Sidebar() {
             <div className="mb-3 hidden md:block">
               <p className="text-sm text-white">Logged in as</p>
               <p className="font-bold font-inter text-white break-all">
-                {user.email}
+                {username}
               </p>
             </div>
           )}

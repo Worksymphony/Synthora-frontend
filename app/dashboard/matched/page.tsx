@@ -19,7 +19,7 @@ export default function AIPage() {
     setInput("");
     setLoading(true);
 
-    const res = await fetch("http://localhost:5000/api/askai", {
+    const res = await fetch("https://synthora-backend.onrender.com/api/askai", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question: newMessage.text }),
