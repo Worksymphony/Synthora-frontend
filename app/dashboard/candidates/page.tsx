@@ -318,7 +318,7 @@ export default function Page() {
 
               {key.fileURL ? (
                 <Link
-                  href={key.fileURL}
+                  href={`https://docs.google.com/gview?url=${encodeURIComponent(key.fileURL)}&embedded=true`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -497,18 +497,20 @@ export default function Page() {
           </p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
-          disabled={loading1}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium shadow"
-        >
-          <Plus size={16} className="inline-block mr-1 " />
-          {loading1 ? "Uploading..." : "Add Candidates"}
-        </button>
+  onClick={() => setIsModalOpen(true)}
+  disabled={loading1}
+  className={`bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium shadow ${
+    loading1 ? "opacity-60 cursor-not-allowed" : ""
+  }`}
+>
+  <Plus size={16} className="inline-block mr-1" />
+  Add Candidates
+</button>
       </div>
 
       {/* Filters */}
       <div
-        className=" animate-glow flex flex-wrap gap-3 bg-white p-4 rounded-xl shadow-[0_8px_10px_-3px_rgba(0,0,0,0.25),0_0px_6px_rgba(0,0,0,0.1)]
+        className="flex flex-wrap gap-3 bg-white p-4 rounded-xl shadow-[0_8px_10px_-3px_rgba(0,0,0,0.25),0_0px_6px_rgba(0,0,0,0.1)]
  border"
       >
         <div className="flex items-center bg-gray-100 px-3 py-2 rounded-lg">

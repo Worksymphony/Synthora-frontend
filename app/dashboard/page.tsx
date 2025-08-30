@@ -56,7 +56,7 @@ const formattedDate = today.toLocaleDateString("en-US", options);
 
   
     return <div>
-       <h1 className="  mt-5 font-extrabold text-4xl text-center">Welcome back <span className="text-orange-500">{Username}</span></h1>
+       <h1 className="  mt-5 font-extrabold text-4xl text-center">Welcome back, <span className="text-orange-500">{Username}</span></h1>
         <h3 className=" mb-8  font-extrabold text-xl text-center">{formattedDate}</h3>
         <KpiSection/>
         {authorized &&<UserListCard/> } 

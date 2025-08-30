@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "@/firebase/config";
+import { Pencil } from "lucide-react";
 
 type Job = {
   id: string;
@@ -300,122 +301,162 @@ useEffect(() => {
 
       {/* Jobs List */}
       <div className="max-w-12xl mx-auto px-2">
-        {loading ?(<h1 className="text-3xl font-extrabold space-x-3 text-center mt-26">Loading Jobs ...</h1>):(<>
-        { jobs.length===0 && <h1 className="text-3xl font-extrabold text-center mt-26">No Job Openings</h1>}
-        <HoverEffect
-          items={filteredJobs.map((job) => ({
-            title: job.JobTitle,
-            description: `${job.ClientName || ""} | ${job.Location || ""} | ${job.SalaryRange || ""}`,
-            content: (
-              <div className="space-y-3 bg-white p-4 rounded-xl shadow-lg text-black">
-                <div className="flex justify-between items-start text-black">
-                  <div>
-                    <h2 className="font-bold  text-lg">{job.ClientName}</h2>
-                    <p className="text-lg font-medium font-inter">{job.JobTitle}</p>
-                  </div>
-
-                  {editingJobId === job.id ? (
-                    <div className="flex flex-col gap-3 items-end">
-                      <div className="flex flex-wrap gap-2">
-                        <input
-                          type="number"
-                          min={0}
-                          className="border p-1 rounded w-20"
-                          value={tempOpeningPositions}
-                          onChange={(e) => setTempOpeningPositions(Number(e.target.value))}
-                          autoFocus
-                        />
-                        <select
-                          value={tempStatus}
-                          onChange={(e) =>
-                            setTempStatus(e.target.value as "active" | "closed")
-                          }
-                          className="border p-1 rounded"
-                        >
-                          <option value="active">Active</option>
-                          <option value="closed">Closed</option>
-                        </select>
-                        <select
-                          value={tempPriority}
-                          onChange={(e) =>
-                            setTempPriority(e.target.value as "High" | "Medium" | "Low")
-                          }
-                          className="border p-1 rounded"
-                        >
-                          <option value="High">High</option>
-                          <option value="Medium">Medium</option>
-                          <option value="Low">Low</option>
-                        </select>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleSaveEdit(job.id)}
-                          className="bg-blue-600 text-white px-3 py-1 rounded"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={cancelEditing}
-                          className="text-red-500 px-3 py-1 rounded border border-red-500"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="cursor-pointer text-right" onClick={() => startEditing(job)}>
-                      <p>
-                        Openings: <span className="font-semibold">{job.openingPositions}</span>
-                      </p>
-                      <p>
-                        Status:{" "}
-                        <span
-                          className={
-                            job.status === "closed"
-                              ? "text-red-600 font-semibold"
-                              : "text-green-600 font-semibold"
-                          }
-                        >
-                          {job.status ?? "active"}
-                        </span>
-                      </p>
-                      <p>
-                        Priority: <span className="font-semibold">{job.priority ?? "Medium"}</span>
-                      </p>
-                    </div>
-                  )}
+  {loading ? (
+    <div className="flex items-center justify-center mt-24 h-full text-gray-500 space-x-1.5 font-semibold">
+      <span>Loading</span>
+      <span>Job</span>
+      <span>descriptions...</span>
+    </div>
+  ) : (
+    <>
+      {jobs.length === 0 && (
+        <h1 className="text-3xl font-extrabold text-center mt-26">
+          No Job Openings
+        </h1>
+      )}
+      <HoverEffect
+        items={filteredJobs.map((job) => ({
+          title: job.JobTitle,
+          description: `${job.ClientName || ""} | ${job.Location || ""} | ${
+            job.SalaryRange || ""
+          }`,
+          content: (
+            <div className="flex flex-col bg-white p-4 rounded-xl shadow-lg text-black h-[300px] w-[350px] relative">
+              {/* Top Section */}
+              <div className="flex justify-between items-start text-black">
+                <div>
+                  <h2 className="font-bold text-lg">{job.ClientName}</h2>
+                  <p className="text-lg mt-2 font-medium font-inter">
+                    {job.JobTitle}
+                  </p>
                 </div>
 
-                <p className="text-sm font-inter font-medium">📍 {job.Location}</p>
-                <p className="text-sm font-inter font-medium">💰 {job.SalaryRange}</p>
-                <p className="text-gray-600 text-sm">
-  {job.JobDescription?.length
-    ? job.JobDescription.length > 100
-      ? `${job.JobDescription.slice(0, 60)}...`
-      : job.JobDescription
-    : "-"}
-</p>
+                {editingJobId === job.id ? (
+                  <div className="flex flex-col gap-3 items-end">
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        type="number"
+                        min={0}
+                        className="border p-1 rounded w-20"
+                        value={tempOpeningPositions}
+                        onChange={(e) =>
+                          setTempOpeningPositions(Number(e.target.value))
+                        }
+                        autoFocus
+                      />
+                      <select
+                        value={tempStatus}
+                        onChange={(e) =>
+                          setTempStatus(e.target.value as "active" | "closed")
+                        }
+                        className="border p-1 rounded"
+                      >
+                        <option value="active">Active</option>
+                        <option value="closed">Closed</option>
+                      </select>
+                      <select
+                        value={tempPriority}
+                        onChange={(e) =>
+                          setTempPriority(
+                            e.target.value as "High" | "Medium" | "Low"
+                          )
+                        }
+                        className="border p-1 rounded"
+                      >
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSaveEdit(job.id)}
+                        className="bg-blue-600 text-white px-3 py-1 rounded"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={cancelEditing}
+                        className="text-red-500 px-3 py-1 rounded border border-red-500"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="cursor-pointer text-right"
+                    onClick={() => startEditing(job)}
+                  >
+                    <p>
+                      Openings:{" "}
+                      <span className="font-semibold">
+                        {job.openingPositions}
+                      </span>
+                    </p>
+                    <p>
+                      Status:{" "}
+                      <span
+                        className={
+                          job.status === "closed"
+                            ? "text-red-600 font-semibold"
+                            : "text-green-600 font-semibold"
+                        }
+                      >
+                        {job.status ?? "active"}
+                      </span>
+                    </p>
+                    <p>
+                      Priority:{" "}
+                      <span className="font-semibold">
+                        {job.priority ?? "Medium"}
+                      </span>
+                    </p>
+                  </div>
+                )}
+              </div>
 
+              
+              
+
+              {/* Job Info */}
+              <p className="text-sm mt-2 font-inter font-medium">
+                📍 {job.Location}
+              </p>
+              <p className="text-sm mt-2 font-inter font-medium">
+                💰 {job.SalaryRange}
+              </p>
+              <p className="text-gray-600 mt-2 text-sm line-clamp-3">
+                {job.JobDescription?.length
+                  ? job.JobDescription.length > 100
+                    ? `${job.JobDescription.slice(0, 60)}...`
+                    : job.JobDescription
+                  : "-"}
+              </p>
+
+              {/* Buttons at bottom */}
+              <div className="mt-auto flex justify-between">
                 <Button
                   onClick={() => handleDelete(job.id)}
-                  size={"sm"}
-                  variant={"destructive"}
-                  className="mt-auto "
+                  size="sm"
+                  variant="destructive"
                 >
                   Delete
                 </Button>
                 <Button
                   onClick={() => router.push(`/dashboard/jd/${job.id}`)}
-                  className="mt-auto  ml-24"
+                  size="sm"
                 >
                   View Details
                 </Button>
               </div>
-            ),
-          }))}
-        /></>)}
-        
-      </div>
+            </div>
+          ),
+        }))}
+      />
+    </>
+  )}
+</div>
     </div>
-  );
+  )
 }

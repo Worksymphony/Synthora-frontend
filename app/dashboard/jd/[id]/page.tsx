@@ -10,6 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +30,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { NotebookPen, PencilLine, ThumbsDown, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { Input } from "@/components/ui/input";
 
 /** Types */
 interface Job {
@@ -451,28 +454,62 @@ toast.error("Failed to save candidate note");
     <div className="max-w-6xl mx-auto p-6 space-y-6 bg-white font-inter rounded-lg shadow-lg relative">
       <div className="mt-4">
         <Dialog open={open1} onOpenChange={setopen1}>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Edit Job Description</DialogTitle>
-            </DialogHeader>
-            
-            <input value={edited.Client} name="Client" onChange={(e)=>{setedited({...edited,[e.target.name]:e.target.value})}} placeholder="Client" type="text" />
-            <input value={edited.Position} name="Position" onChange={(e)=>{setedited({...edited,[e.target.name]:e.target.value})}} placeholder="Position" type="text" />
-            <input value={edited.salary} name="salary" onChange={(e)=>{setedited({...edited,[e.target.name]:e.target.value})}} placeholder="salary" type="text" />
-            <input value={edited.location} name="location" onChange={(e)=>{setedited({...edited,[e.target.name]:e.target.value})}} placeholder="location" type="text" />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setopen1(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={Editdetail}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
-              >
-                Save
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+  <DialogContent className="sm:max-w-lg">
+    <DialogHeader>
+      <DialogTitle>Edit Job Description</DialogTitle>
+      <DialogDescription>
+        Update the fields below to modify this job listing.
+      </DialogDescription>
+    </DialogHeader>
+
+    <form className="space-y-4">
+      <Input
+        value={edited.Client}
+        name="Client"
+        placeholder="Client"
+        onChange={(e) =>
+          setedited({ ...edited, [e.target.name]: e.target.value })
+        }
+      />
+      <Input
+        value={edited.Position}
+        name="Position"
+        placeholder="Position"
+        onChange={(e) =>
+          setedited({ ...edited, [e.target.name]: e.target.value })
+        }
+      />
+      <Input
+        value={edited.salary}
+        name="salary"
+        placeholder="Salary"
+        onChange={(e) =>
+          setedited({ ...edited, [e.target.name]: e.target.value })
+        }
+      />
+      <Input
+        value={edited.location}
+        name="location"
+        placeholder="Location"
+        onChange={(e) =>
+          setedited({ ...edited, [e.target.name]: e.target.value })
+        }
+      />
+    </form>
+
+    <DialogFooter className="mt-4 flex gap-2">
+      
+      <Button
+        onClick={Editdetail}
+        type="button"
+        className="w-full bg-orange-500 hover:bg-orange-600"
+      >
+        Save Changes
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>

@@ -31,14 +31,14 @@ const handleSubmit = async (e: FormEvent) => {
 
   handleModalToggle();
 
-  const toastId = toast.loading("Uploading JD... 0%");
+  const toastId = toast.loading("Uploading JD...");
   setLoading(true);
 
   try {
     const res = await axios.post("https://synthora-backend.onrender.com/api/uploadjd/file", formData, {
       onUploadProgress: (progressEvent) => {
-        const percent = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
-        toast.loading(`Uploading JD... ${percent}%`, { id: toastId });
+        
+        toast.loading(`Uploading JD...`, { id: toastId });
       },
     });
 
