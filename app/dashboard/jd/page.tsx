@@ -300,7 +300,7 @@ useEffect(() => {
 
 
       {/* Jobs List */}
-      <div className="max-w-12xl mx-auto px-2">
+      <div className="max-w-12xl mx-auto ">
   {loading ? (
     <div className="flex items-center justify-center mt-24 h-full text-gray-500 space-x-1.5 font-semibold">
       <span>Loading</span>
@@ -310,18 +310,19 @@ useEffect(() => {
   ) : (
     <>
       {jobs.length === 0 && (
-        <h1 className="text-3xl font-extrabold text-center mt-26">
+        <h1 className="flex items-center justify-center mt-24 h-full text-gray-500 space-x-1.5 font-semibold">
           No Job Openings
         </h1>
       )}
       <HoverEffect
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
         items={filteredJobs.map((job) => ({
           title: job.JobTitle,
           description: `${job.ClientName || ""} | ${job.Location || ""} | ${
             job.SalaryRange || ""
           }`,
           content: (
-            <div className="flex flex-col bg-white p-4 rounded-xl shadow-lg text-black h-[300px] w-[350px] relative">
+            <div className="flex flex-col bg-white p-4 rounded-xl shadow-lg text-black h-[350px] relative">
               {/* Top Section */}
               <div className="flex justify-between items-start text-black">
                 <div>
@@ -447,7 +448,7 @@ useEffect(() => {
                   onClick={() => router.push(`/dashboard/jd/${job.id}`)}
                   size="sm"
                 >
-                  View Details
+                  Edit / Details
                 </Button>
               </div>
             </div>

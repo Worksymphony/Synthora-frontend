@@ -38,6 +38,7 @@ type FirestoreTimestamp = {
 };
 
 interface MetadataItem {
+  recruitername?: string;
   id: string;
   fileName?: string;
   fileURL?: string;
@@ -62,6 +63,9 @@ type ResumeAssignment = {
   companyId: string;
   resumeId: string;
   companyname: string;
+  recruitername:string;
+  hiringstatus:string;
+  notes:string;
 };
 
 export default function Page() {
@@ -127,34 +131,29 @@ export default function Page() {
   }, [user]);
 
   const updateHiringStatus = async (candidateId: string, newStatus: string) => {
-    setmetadata((prev) =>
-      prev.map((item) =>
-        item.id === candidateId ? { ...item, hiringstatus: newStatus } : item
-      )
+  setmetadata((prev) =>
+    prev.map((item) =>
+      item.id === candidateId ? { ...item, hiringstatus: newStatus } : item
+    )
+  );
+
+  try {
+    const res = await fetch(
+      `https://synthora-backend.onrender.com/api/upload/hiringstatus/${candidateId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hiringstatus: newStatus, companyId }), 
+      }
     );
+    if (!res.ok) throw new Error(`Failed (${res.status})`);
+    toast.success("Successfully updated Status");
+  } catch (err) {
+    console.error("Error updating hiring status:", err);
+    toast.error("Error updating hiring status");
+  }
+};
 
-    try {
-      const res = await fetch(
-        `https://synthora-backend.onrender.com/api/upload/hiringstatus/${candidateId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ hiringstatus: newStatus }),
-        }
-      );
-      if (!res.ok) throw new Error(`Failed (${res.status})`);
-      toast.success("Successfully updated Status");
-    } catch (err) {
-      console.error("Error updating hiring status:", err);
-      toast.error("Error updating hiring status");
-
-      setmetadata((prev) =>
-        prev.map((item) =>
-          item.id === candidateId ? { ...item, hiringstatus: item.hiringstatus } : item
-        )
-      );
-    }
-  };
 
 
   const refreshFromStart = async () => {
@@ -217,9 +216,12 @@ export default function Page() {
           const assignment = recruiterAssignments.find((a) => a.resumeId === resume.id);
           return {
             ...resume,
-            recruiterId: assignment?.recruiterId || null,
+            recruitername: assignment?.recruitername || null,
+            recruiterId:assignment?.recruiterId||null,
             companyId: assignment?.companyId || null,
             companyname: assignment?.companyname || null,
+            hiringstatus:assignment?.hiringstatus || null,
+            notes:assignment?.notes || null,
           };
         });
 
@@ -335,13 +337,14 @@ export default function Page() {
                   className="border rounded-lg p-1 text-sm border-amber-800"
                   onKeyDown={async (e) => {
                     if (e.key === "Enter") {
-                      const recruiterId = (e.target as HTMLInputElement).value;
+                      const recruitername = (e.target as HTMLInputElement).value;
 
-                      if (!recruiterId.trim()) return;
+                      if (!recruitername.trim()) return;
 
                       await addDoc(collection(db, "resumeAssignments"), {
                         resumeId: key.id,
-                        recruiterId,
+                        recruitername,
+                        recruiterId:user?.uid,
                         companyname: companyname,
                         companyId: companyId,
 
@@ -351,7 +354,7 @@ export default function Page() {
                       toast.success("Tagged Assign Successfully !");
                       setmetadata((prev: any) =>
                         prev.map((item: any) =>
-                          item.id === key.id ? { ...item, recruiterId } : item
+                          item.id === key.id ? { ...item, recruitername,recruiterId: user?.uid } : item
                         )
                       );
                     }
@@ -359,7 +362,7 @@ export default function Page() {
                 />
               ) : (
                 <p className="text-sm font-inter text-gray-500">
-                  Belongs To : {key.recruiterId}
+                  Belongs To : {key.recruitername}
                 </p>
               )}
             </div>
@@ -460,7 +463,8 @@ export default function Page() {
       Array.from(selectedFiles).forEach((file) =>
         formData.append("files", file)
       );
-      formData.append("recuiter", Username);
+      formData.append("recruitername", Username);
+      formData.append("recruiterId",user?.uid)
       formData.append("companyname", companyname);
       formData.append("companyId", companyId);
       const res = await fetch("https://synthora-backend.onrender.com/api/upload", {
@@ -624,6 +628,7 @@ export default function Page() {
           ID={selectedId}
           metadata={refreshFromStart}
           setMetadata={setmetadata}
+          companyId={companyId}
           onclick={() => setnotediag(false)}
         />
       )}

@@ -84,6 +84,8 @@ type ResumeAssignment = {
   companyId: string;
   resumeId: string;
   companyname: string;
+  recruitername:string;
+  notes:string;
 };
 interface EditedData {
   Client: string;
@@ -207,22 +209,35 @@ const [candidateNote, setCandidateNote] = useState("");
 
   const handleCandidateNoteSave = async () => {
 if (!activeResumeId) return;
-try {
-const resumeRef = doc(db, "resumes", activeResumeId);
-await updateDoc(resumeRef, { notes: candidateNote });
-// Optimistic UI update
-setResumes((prev) =>
-prev.map((r) =>
-r.id === activeResumeId ? { ...r, notes: candidateNote } : r
-)
-);
-toast.success("Candidate note saved!");
-setCandidateNote("");
-setNoteModalOpen(false);
-} catch (err) {
-console.error(err);
-toast.error("Failed to save candidate note");
-}
+ try {
+      // Find the assignment for this company + resume
+      const q = query(
+        collection(db, "resumeAssignments"),
+        where("resumeId", "==", activeResumeId),
+        where("companyId", "==", companyId)
+      );
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        toast.error("Assignment not found for this resume");
+        return;
+      }
+
+      const assignmentDoc = snap.docs[0].ref;
+
+      await updateDoc(assignmentDoc, { notes:candidateNote });
+
+      // Optimistically update parent state
+      setResumes((prev) =>
+        prev.map((item) => (item.id === activeResumeId ? { ...item,notes:candidateNote } : item))
+      );
+      setNoteModalOpen(false)
+       // close modal
+      toast.success("Note added successfully!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to add note");
+    }
 };
   const saveAdditionalNote = async () => {
     if (!jobId) return;
@@ -264,9 +279,10 @@ toast.error("Failed to save candidate note");
           const assignment = rec.find((a) => a.resumeId === resume.id);
           return {
             ...resume,
-            recruiterId: assignment?.recruiterId || null,
+            recruiterId: assignment?.recruitername || null,
             companyId: assignment?.companyId || null,
             companyname: assignment?.companyname || null,
+            notes:assignment?.notes || null,
           };
         });
       all.push(...(mergedData as Resume[]));
@@ -320,6 +336,13 @@ toast.error("Failed to save candidate note");
 
       if (apiRes.status === "limit_exceeded") {
         toast.success(apiRes.message);
+        finishAiOverlay()
+        return
+      }
+      if(apiRes.status === "Not Found"){
+        finishAiOverlay()
+        toast.success(apiRes.message)
+        return
       }
       if (apiRes.warning) {
         toast.success(apiRes.warning);

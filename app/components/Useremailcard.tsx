@@ -128,7 +128,7 @@ export const UserListCard = () => {
 
               const resumeQuery = query(
                 collection(db, "resumeAssignments"),
-                where("recruiterId", "==", recData.name)
+                where("recruiterId", "==", recId)
               );
               const resumeSnapshot = await getDocs(resumeQuery);
 
@@ -157,7 +157,7 @@ export const UserListCard = () => {
 
             const resumeQuery = query(
               collection(db, "resumeAssignments"),
-              where("recruiterId", "==", recData.name)
+              where("recruiterId", "==", recId)
             );
             const resumeSnapshot = await getDocs(resumeQuery);
 

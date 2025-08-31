@@ -136,7 +136,7 @@ export default function CalendarTab() {
     <div className="p-6 bg-gradient-to-b from-white to-white rounded-lg shadow-lg">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold  text-black flex items-center gap-2">
+        <h1 className="text-3xl font-bold  text-black flex items-center gap-2">
           📅 Hiring Calendar
         </h1>
         <Button
