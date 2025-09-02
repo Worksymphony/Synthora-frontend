@@ -233,7 +233,7 @@ if (!activeResumeId) return;
 
       // Optimistically update parent state
       setResumes((prev) =>
-        prev.map((item) => (item.id === activeResumeId ? { ...item,notes:candidateNote } : item))
+        prev.map((item) => (item.id === activeResumeId ? { ...item,notes:finalNote } : item))
       );
       setNoteModalOpen(false)
        // close modal
@@ -329,7 +329,7 @@ if (!activeResumeId) return;
       await sleep(350);
       stepDone();
 
-      const res = await fetch("https://synthora-backend.onrender.com/api/matching/recent", {
+      const res = await fetch("https://synthora-backend-production.up.railway.app/api/matching/recent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid: jobId, companyId, userid: userId }),
@@ -388,7 +388,7 @@ if (!activeResumeId) return;
       await sleep(350);
       stepDone();
 
-      const res = await fetch("https://synthora-backend.onrender.com/api/matching", {
+      const res = await fetch("https://synthora-backend-production.up.railway.app/api/matching", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid: jobId, companyId, userid: userId }),

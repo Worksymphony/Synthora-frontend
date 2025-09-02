@@ -233,7 +233,7 @@ export const UserListCard = () => {
 
         // delete recruiter user doc + auth
         deletePromises.push(deleteDoc(doc(db, "users", recDoc.id)));
-        await axios.post("https://synthora-backend.onrender.com/api/deleteAuthUser", { id: recDoc.id });
+        await axios.post("https://synthora-backend-production.up.railway.app/api/deleteAuthUser", { id: recDoc.id });
       }
 
       await Promise.all(deletePromises);
@@ -243,7 +243,7 @@ export const UserListCard = () => {
 
       // ✅ Then delete the admin
       await deleteDoc(doc(db, "users", id));
-      await axios.post("https://synthora-backend.onrender.com/api/deleteAuthUser", { id });
+      await axios.post("https://synthora-backend-production.up.railway.app/api/deleteAuthUser", { id });
 
       toast.success("Admin, their recruiters, and all assignments deleted!");
       setUsers((prev) => prev.filter((user) => user.id !== id));
@@ -252,7 +252,7 @@ export const UserListCard = () => {
       await deleteAssignments(id);
 
       await deleteDoc(doc(db, "users", id));
-      await axios.post("https://synthora-backend.onrender.com/api/deleteAuthUser", { id });
+      await axios.post("https://synthora-backend-production.up.railway.app/api/deleteAuthUser", { id });
 
       toast.success("Recruiter and assignments deleted!");
 

@@ -86,7 +86,7 @@ useEffect(() => {
   const getJobs = async () => {
     try {
       setloading(true)
-      const res = await fetch("https://synthora-backend.onrender.com/api/getjobdesc",{
+      const res = await fetch("https://synthora-backend-production.up.railway.app/api/getjobdesc",{
         method:"POST",
          headers: {
         "Content-Type": "application/json", // 👈 Add this line
@@ -113,7 +113,7 @@ useEffect(() => {
     
     try {
       const uploadToastId = toast.loading("Uploading JD...");
-      await fetch("https://synthora-backend.onrender.com/api/job_description", {
+      await fetch("https://synthora-backend-production.up.railway.app/api/job_description", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newjd),
@@ -141,7 +141,7 @@ useEffect(() => {
   // Save edited job
   const handleSaveEdit = async (jobId: string) => {
     try {
-      const res = await fetch(`https://synthora-backend.onrender.com/api/job_description/${jobId}`, {
+      const res = await fetch(`https://synthora-backend-production.up.railway.app/api/job_description/${jobId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -163,7 +163,7 @@ useEffect(() => {
   // Delete job
   const handleDelete = async (jobId: string) => {
     try {
-      const res = await fetch(`https://synthora-backend.onrender.com/api/job_description/${jobId}`, {
+      const res = await fetch(`https://synthora-backend-production.up.railway.app/api/job_description/${jobId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });

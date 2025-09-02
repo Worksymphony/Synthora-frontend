@@ -144,7 +144,7 @@ export default function Page() {
 
   try {
     const res = await fetch(
-      `https://synthora-backend.onrender.com/api/upload/hiringstatus/${candidateId}`,
+      `https://synthora-backend-production.up.railway.app/api/upload/hiringstatus/${candidateId}`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -202,7 +202,7 @@ export default function Page() {
       }
 
       try {
-        const url = new URL("https://synthora-backend.onrender.com/api/getmetadata");
+        const url = new URL("https://synthora-backend-production.up.railway.app/api/getmetadata");
         url.searchParams.set("pageSize", "10");
         if (token) url.searchParams.set("pageToken", token);
 
@@ -475,35 +475,44 @@ export default function Page() {
       formData.append("recruiterId",user?.uid)
       formData.append("companyname", companyname);
       formData.append("companyId", companyId);
-      const res = await fetch("https://synthora-backend.onrender.com/api/upload", {
+      const res = await fetch("https://synthora-backend-production.up.railway.app/api/upload", {
         method: "POST",
         body: formData,
       });
-     if (res.ok) {
+    if (res.ok) {
   setmetadata([]);
   setNextPageToken(null);
 
   const result = await res.json();
-  
+  console.log(result);
 
-  // ✅ Handle uploaded files
-  if (result.uploaded && result.uploaded.length > 0) {
-   
-      toast.success(` Uploaded successfully`, {
-        id: uploadToastId,
-      });
-    
-  }
+  const uploadedCount = result.uploaded?.length || 0;
+  const failedCount = result.failed?.length || 0;
 
-  // ❌ Handle failed files
-  if (result.failed && result.failed.length > 0) {
+  if (uploadedCount > 0 && failedCount === 0) {
+    // ✅ All uploaded successfully
+    toast.success(` ${uploadedCount} file uploaded successfully`, {
+      id: uploadToastId,
+    });
+  } else if (uploadedCount > 0 && failedCount > 0) {
+    // ⚠️ Some succeeded, some failed
+    toast.success(` ${uploadedCount} files uploaded successfully`, {
+      id: uploadToastId,
+    });
+
     result.failed.forEach((doc: any) => {
-      toast.error(`❌ Failed to upload: ${doc.name} (${doc.reason})`);
+      toast.error(` Failed to upload: ${doc.name} (${doc.reason})`);
+    });
+  } else if (failedCount > 0) {
+    // ❌ All failed
+    toast.error(`  ${failedCount} files failed to upload`, {
+      id: uploadToastId,
     });
   }
 
   fetchMetadata(null, true);
 }
+
  else {
         const errData = await res.json();
         toast.error(`Upload failed: ${errData.message || "Unknown error"}`);

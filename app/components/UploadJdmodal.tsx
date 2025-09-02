@@ -35,7 +35,7 @@ const handleSubmit = async (e: FormEvent) => {
   setLoading(true);
 
   try {
-    const res = await axios.post("https://synthora-backend.onrender.com/api/uploadjd/file", formData, {
+    const res = await axios.post("https://synthora-backend-production.up.railway.app/api/uploadjd/file", formData, {
       onUploadProgress: (progressEvent) => {
         
         toast.loading(`Uploading JD...`, { id: toastId });
