@@ -2,7 +2,7 @@
 "use client";
 import axios from "axios";
 import { useState, useEffect, useCallback, useRef,useContext } from "react";
-import { LoadingContext } from "../layout";
+import { LoadingContext } from "../../context/LoadingContext";
 import {
   Plus,
   Search,
@@ -486,7 +486,7 @@ export default function Page() {
   // ✅ Handle uploaded files
   if (result.uploaded && result.uploaded.length > 0) {
    
-      toast.success(`✅ Uploaded successfully`, {
+      toast.success(` Uploaded successfully`, {
         id: uploadToastId,
       });
     
