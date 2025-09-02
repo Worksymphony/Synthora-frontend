@@ -133,7 +133,7 @@ export default function Page() {
       }
     };
     fetchUsername();
-  }, [user]);
+  }, [user,Username,companyId,companyname]);
 
   const updateHiringStatus = async (candidateId: string, newStatus: string) => {
   setmetadata((prev) =>
@@ -337,34 +337,37 @@ export default function Page() {
                 <span className="text-red-500 text-sm">No file</span>
               )}
               {!key.recruiterId ? (
-                <input
-                  placeholder="Set Recruiter Name"
-                  className="border rounded-lg p-1 text-sm border-amber-800"
-                  onKeyDown={async (e) => {
-                    if (e.key === "Enter") {
-                      const recruitername = (e.target as HTMLInputElement).value;
-
-                      if (!recruitername.trim()) return;
+                 <button
+                    onClick={async () => {
+                      if (!user) {
+                        toast.error("You must be logged in to tag");
+                        return;
+                      }
 
                       await addDoc(collection(db, "resumeAssignments"), {
                         resumeId: key.id,
-                        recruitername,
-                        recruiterId:user?.uid,
-                        companyname: companyname,
-                        companyId: companyId,
-
+                        recruiterId: user.uid,
+                        recruitername: Username, // depends on your auth setup
+                        companyname,
+                        companyId,
                         taggedAt: serverTimestamp(),
                         locked: true,
                       });
-                      toast.success("Tagged Assign Successfully !");
+
+                      toast.success("Tagged successfully!");
+
                       setmetadata((prev: any) =>
                         prev.map((item: any) =>
-                          item.id === key.id ? { ...item, recruitername,recruiterId: user?.uid } : item
+                          item.id === key.id
+                            ? { ...item, recruitername: Username|| "Unknown", recruiterId: user.uid }
+                            : item
                         )
                       );
-                    }
-                  }}
-                />
+                    }}
+                    className="bg-orange-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-700 transition"
+                  >
+                    Tag to Me
+                  </button>
               ) : (
                 <p className="text-sm font-inter text-gray-500">
                   Belongs To : {key.recruitername}
@@ -389,7 +392,7 @@ export default function Page() {
             </select>
 
             <p className="text-sm text-gray-700 bg-gray-50 px-3 py-1 rounded-lg">
-              {key.notes || "No notes yet"}
+               {key.notes || "No notes yet"}
             </p>
 
             <div className="text-xs text-gray-500 space-y-1">
@@ -650,6 +653,7 @@ export default function Page() {
       {notediag && (
         <Notes
           isopen={notediag}
+          writter={Username}
           ID={selectedId}
           metadata={refreshFromStart}
           setMetadata={setmetadata}

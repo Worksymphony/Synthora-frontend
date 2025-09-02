@@ -31,6 +31,7 @@ interface MetadataItem {
 
 type noteprops = {
   isopen: boolean;
+  writter:string;
   onclick: () => void;
   metadata: () => void;
   ID: string | null; // resumeId
@@ -38,7 +39,7 @@ type noteprops = {
   setMetadata: React.Dispatch<React.SetStateAction<MetadataItem[]>>;
 };
 
-const Notes: React.FC<noteprops> = ({ isopen, onclick, ID, companyId, setMetadata }) => {
+const Notes: React.FC<noteprops> = ({ isopen, onclick, ID, companyId, setMetadata,writter }) => {
   const [notes, setnotes] = useState("");
 
   if (!isopen) return null;
@@ -53,19 +54,20 @@ const Notes: React.FC<noteprops> = ({ isopen, onclick, ID, companyId, setMetadat
         where("companyId", "==", companyId)
       );
       const snap = await getDocs(q);
-
+      console.log(writter)
       if (snap.empty) {
         toast.error("Assignment not found for this resume");
         return;
       }
 
       const assignmentDoc = snap.docs[0].ref;
-
-      await updateDoc(assignmentDoc, { notes });
+       const finalNote = `${writter} say's: ${notes}`;
+       setnotes(finalNote)
+      await updateDoc(assignmentDoc, { notes:finalNote });
 
       // Optimistically update parent state
       setMetadata((prev) =>
-        prev.map((item) => (item.id === resumeId ? { ...item, notes } : item))
+        prev.map((item) => (item.id === resumeId ? { ...item, notes:finalNote } : item))
       );
 
       onclick(); // close modal

@@ -137,6 +137,7 @@ const [candidateNote, setCandidateNote] = useState("");
   const [aiStepIndex, setAiStepIndex] = useState(0); // 0..steps-1
   const [aiProgress, setAiProgress] = useState(0); // 0..100
   const [aiBusy, setAiBusy] = useState(false);
+  const [username,setUsername]=useState("")
   const [edited,setedited]=useState<EditedData>({Client:'',Position:'',location:'',salary:''})
   const progressPerStep = useMemo(
     () => Math.floor(100 / aiSteps.length),
@@ -156,6 +157,8 @@ const [candidateNote, setCandidateNote] = useState("");
         const docRef = doc(db, "users", user.uid);
         const snapshot = await getDoc(docRef);
         const cid = snapshot.data()?.companyId ?? "";
+        const writter=snapshot.data()?.name;
+        setUsername(writter);
         setCompanyId(cid);
       } catch (e) {
         console.error("Failed to read companyId", e);
@@ -222,10 +225,11 @@ if (!activeResumeId) return;
         toast.error("Assignment not found for this resume");
         return;
       }
-
+      const finalNote = `${username} say's: ${candidateNote}`;
+       setCandidateNote(finalNote)
       const assignmentDoc = snap.docs[0].ref;
 
-      await updateDoc(assignmentDoc, { notes:candidateNote });
+      await updateDoc(assignmentDoc, { notes:finalNote });
 
       // Optimistically update parent state
       setResumes((prev) =>
@@ -591,7 +595,7 @@ if (!activeResumeId) return;
         <h1 className="text-3xl font-bold text-gray-900">{job.ClientName}</h1>
         <PencilLine
           onClick={() => setopen1(true)}
-          className=" ml-auto text-orange-500"
+          className=" text-orange-500"
         >
           
         </PencilLine>

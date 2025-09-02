@@ -193,58 +193,84 @@ export const UserListCard = () => {
   }
 
   const handledelete = async (
-    id: string,
-    role?: string,
-    companyId?: string
-  ) => {
-    try {
-      if (!authorized) return;
+  id: string,
+  role?: string,
+  companyId?: string
+) => {
+  try {
+    if (!authorized) return;
 
-      if (role === "admin") {
-        // ✅ First delete all recruiters belonging to this admin's company
-        const recruitersQuery = query(
-          collection(db, "users"),
-          where("role", "==", "recruiter"),
-          where("companyId", "==", companyId)
-        );
-        const recruitersSnap = await getDocs(recruitersQuery);
+    // ✅ Helper: delete all assignments for a given recruiterId
+    const deleteAssignments = async (recruiterId: string) => {
+      const assignmentsQuery = query(
+        collection(db, "resumeAssignments"),
+        where("recruiterId", "==", recruiterId)
+      );
+      const assignmentsSnap = await getDocs(assignmentsQuery);
 
-        const deletePromises: Promise<void>[] = [];
-        recruitersSnap.forEach(async(recDoc) => {
-          deletePromises.push(deleteDoc(doc(db, "users", recDoc.id)));
-           await axios.post("https://synthora-backend.onrender.com/api/deleteAuthUser",{id:recDoc.id})
-        });
+      const assignmentDeletes: Promise<void>[] = [];
+      assignmentsSnap.forEach((docSnap) => {
+        assignmentDeletes.push(deleteDoc(doc(db, "resumeAssignments", docSnap.id)));
+      });
 
-        await Promise.all(deletePromises);
+      await Promise.all(assignmentDeletes);
+    };
 
-        // ✅ Then delete the admin
-        await deleteDoc(doc(db, "users", id));
-         await axios.post("https://synthora-backend.onrender.com/api/deleteAuthUser",{id})
-        toast.success("Admin and all their recruiters deleted successfully!");
+    if (role === "admin") {
+      // ✅ First delete all recruiters belonging to this admin's company
+      const recruitersQuery = query(
+        collection(db, "users"),
+        where("role", "==", "recruiter"),
+        where("companyId", "==", companyId)
+      );
+      const recruitersSnap = await getDocs(recruitersQuery);
 
-        // ✅ Update state
-        setUsers((prev) => prev.filter((user) => user.id !== id));
-      } else {
-        // ✅ Normal recruiter delete
-        await deleteDoc(doc(db, "users", id));
-        await axios.post("https://synthora-backend.onrender.com/api/deleteAuthUser",{id})
-        toast.success("Recruiter deleted successfully!");
+      const deletePromises: Promise<void>[] = [];
 
-        setUsers((prev) =>
-          currentUserData?.role === "admin"
-            ? prev.filter((user) => user.id !== id)
-            : prev.map((admin) => ({
-                ...admin,
-                recruiters:
-                  admin.recruiters?.filter((r) => r.id !== id) || [],
-              }))
-        );
+      for (const recDoc of recruitersSnap.docs) {
+        // delete recruiter’s assignments
+        await deleteAssignments(recDoc.id);
+
+        // delete recruiter user doc + auth
+        deletePromises.push(deleteDoc(doc(db, "users", recDoc.id)));
+        await axios.post("https://synthora-backend.onrender.com/api/deleteAuthUser", { id: recDoc.id });
       }
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      toast.error("Error deleting user");
+
+      await Promise.all(deletePromises);
+
+      // ✅ Delete admin’s assignments
+      await deleteAssignments(id);
+
+      // ✅ Then delete the admin
+      await deleteDoc(doc(db, "users", id));
+      await axios.post("https://synthora-backend.onrender.com/api/deleteAuthUser", { id });
+
+      toast.success("Admin, their recruiters, and all assignments deleted!");
+      setUsers((prev) => prev.filter((user) => user.id !== id));
+    } else {
+      // ✅ Normal recruiter delete
+      await deleteAssignments(id);
+
+      await deleteDoc(doc(db, "users", id));
+      await axios.post("https://synthora-backend.onrender.com/api/deleteAuthUser", { id });
+
+      toast.success("Recruiter and assignments deleted!");
+
+      setUsers((prev) =>
+        currentUserData?.role === "admin"
+          ? prev.filter((user) => user.id !== id)
+          : prev.map((admin) => ({
+              ...admin,
+              recruiters: admin.recruiters?.filter((r) => r.id !== id) || [],
+            }))
+      );
     }
-  };
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    toast.error("Error deleting user");
+  }
+};
+
 
   const toggleRecruiter = (id: string) => {
     setOpenRecruiterId(openRecruiterId === id ? null : id);
