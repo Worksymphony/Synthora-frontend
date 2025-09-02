@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { auth, db } from "@/firebase/config";
 
 import {
   Card,
@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 const stages = [
   "applied",
@@ -42,12 +43,32 @@ export function ConversionRates() {
     rejected: 0,
   });
   const [loading, setLoading] = useState(true);
+   const [companyId, setcompanyId] = useState("");
+    const [user] = useAuthState(auth);
+
+   useEffect(() => {
+        if (!user?.uid) return;
+        const fetchUsername = async () => {
+          try {
+            const docRef = doc(db, "users", user.uid);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              
+             
+              setcompanyId(docSnap.data().companyId);
+            }
+          } catch (error) {
+            console.error("Error fetching username:", error);
+          }
+        };
+        fetchUsername();
+      }, [user]);
 
   useEffect(() => {
     async function fetchCounts() {
       setLoading(true);
       try {
-        const snapshot = await getDocs(collection(db, "resumes"));
+        const snapshot = await getDocs(collection(db, "resumeAssignments",companyId));
         const tempCounts: Record<Stage, number> = {
           applied: 0,
           screening: 0,

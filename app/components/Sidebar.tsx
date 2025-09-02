@@ -58,7 +58,7 @@ export default function Sidebar() {
   { href: "/dashboard", icon: Home, label: "DashBoard" },
   { href: "/dashboard/candidates", icon: UserRound, label: "Candidates" },
   { href: "/dashboard/jd", icon: FileText, label: "Job Openings" },
-  { href: "/dashboard/calender", icon: Calendar, label: "Calender" },
+  { href: "/dashboard/calender", icon: Calendar, label: "Calendar" },
   ...(superadmin
     ? [{ href: "/dashboard/aireport", icon: MessageSquareWarning, label: "AI-Report" }]
     : []),

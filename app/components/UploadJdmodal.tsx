@@ -105,10 +105,10 @@ const handleSubmit = async (e: FormEvent) => {
             </div>
           )}
 
-          <div className="flex gap-4 mt-6">
+          <div className="flex gap-5 mt-6">
             <button
               type="submit"
-              className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold transition-all"
+              className="flex-1/2 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold transition-all"
               disabled={loading}
             >
               {loading ? "Uploading..." : "Upload"}

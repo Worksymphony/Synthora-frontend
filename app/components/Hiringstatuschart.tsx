@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { auth, db } from "@/firebase/config";
 
 import {
   Card,
@@ -25,6 +25,7 @@ import {
   Cell,
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 type HiringStatus =
   | "applied"
@@ -64,12 +65,31 @@ export function HiringStatusChart() {
     { status: HiringStatus; count: number }[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const [companyId, setcompanyId] = useState("");
+    const [user] = useAuthState(auth);
+   useEffect(() => {
+      if (!user?.uid) return;
+      const fetchUsername = async () => {
+        try {
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            
+           
+            setcompanyId(docSnap.data().companyId);
+          }
+        } catch (error) {
+          console.error("Error fetching username:", error);
+        }
+      };
+      fetchUsername();
+    }, [user]);
 
   useEffect(() => {
     async function fetchHiringStatusCounts() {
       setLoading(true);
       try {
-        const colRef = collection(db, "resumes"); // your resumes collection
+        const colRef = collection(db, "resumeAssignments",companyId); // your resumes collection
         const snapshot = await getDocs(colRef);
         
         const counts: Record<HiringStatus, number> = {

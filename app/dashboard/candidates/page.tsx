@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import axios from "axios";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef,useContext } from "react";
+import { LoadingContext } from "../layout";
 import {
   Plus,
   Search,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import { serverTimestamp } from "firebase/firestore";
 import Link from "next/link";
+
 import UploadModal from "@/app/components/UploadModal";
 import CandidateModal from "@/app/components/CandidateModal";
 import toast from "react-hot-toast";
@@ -69,6 +71,9 @@ type ResumeAssignment = {
 };
 
 export default function Page() {
+  const ctx=useContext(LoadingContext)
+  if (!ctx) throw new Error("AddButton must be used inside DashboardLayout");
+  const { loading1, setLoading1 } = ctx;
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [user] = useAuthState(auth);
@@ -91,7 +96,7 @@ export default function Page() {
   });
 
   const [loading, setLoading] = useState(true);
-  const [loading1, setLoading1] = useState(false);
+  
   const [listHeight, setListHeight] = useState(500);
   const [selectedId, setselectedId] = useState("");
   const [Username, setUsername] = useState("");
@@ -471,12 +476,32 @@ export default function Page() {
         method: "POST",
         body: formData,
       });
-      if (res.ok) {
-        setmetadata([]);
-        setNextPageToken(null);
-        toast.success("Resumes uploaded successfully!", { id: uploadToastId });
-        fetchMetadata(null, true);
-      } else {
+     if (res.ok) {
+  setmetadata([]);
+  setNextPageToken(null);
+
+  const result = await res.json();
+  
+
+  // ✅ Handle uploaded files
+  if (result.uploaded && result.uploaded.length > 0) {
+   
+      toast.success(`✅ Uploaded successfully`, {
+        id: uploadToastId,
+      });
+    
+  }
+
+  // ❌ Handle failed files
+  if (result.failed && result.failed.length > 0) {
+    result.failed.forEach((doc: any) => {
+      toast.error(`❌ Failed to upload: ${doc.name} (${doc.reason})`);
+    });
+  }
+
+  fetchMetadata(null, true);
+}
+ else {
         const errData = await res.json();
         toast.error(`Upload failed: ${errData.message || "Unknown error"}`);
       }
