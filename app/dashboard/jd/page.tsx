@@ -363,7 +363,7 @@ export default function Page() {
                     title: job.JobTitle,
                     description: `${job.ClientName || ""} | ${job.Location || ""} | ${job.SalaryRange || ""}`,
                     content: (
-                      <div className={`flex flex-col bg-white p-4 rounded-xl shadow-lg text-black h-[350px] relative cursor-default ${job.JobTitle === "No Jobtile" || job.ClientName === "No Client Name" || job.Location ==="No Location" || job.SalaryRange==="No SalaryRange" || job.JobDescription==="No JobDescription" ? "border-2 border-red-500" : ""}`}>
+                      <div className={`flex flex-col bg-white p-4 rounded-xl shadow-lg text-black h-[350px] relative cursor-default`}>
                         {/* Top Section */}
                         <div className="flex justify-between items-start text-black">
                           <div>
