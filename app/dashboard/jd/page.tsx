@@ -367,8 +367,8 @@ export default function Page() {
                         {/* Top Section */}
                         <div className="flex justify-between items-start text-black">
                           <div>
-                            <h2 className="font-bold text-lg">{job.ClientName}</h2>
-                            <p className="text-lg mt-2 font-medium font-inter">{job.JobTitle}</p>
+                            <h2 className={`font-bold text-lg ${job.ClientName==="No Client Name"?"text-red-600":""} `}>{job.ClientName}</h2>
+                            <p className={`text-lg mt-2 font-medium font-inter ${job.JobTitle==="No Job title"?"text-red-600":""}`}>{job.JobTitle}</p>
                           </div>
                           {editingJobId === job.id ? (
                             <div className="flex flex-col gap-3 items-end">
@@ -409,8 +409,8 @@ export default function Page() {
                         </div>
 
                         {/* Job Info */}
-                        <p className="text-sm mt-2 font-inter font-medium">📍 {job.Location}</p>
-                        <p className="text-sm mt-2 font-inter font-medium">💰 {job.SalaryRange}</p>
+                        <p className={`text-sm mt-2 font-inter font-medium ${job.Location==="No Location"?"text-red-600":""}`}>📍 {job.Location}</p>
+                        <p className={`text-sm mt-2 font-inter font-medium ${job.SalaryRange==="No Salary Range"?"text-red-600":""}`}>💰 {job.SalaryRange}</p>
                         <p className="text-gray-600 mt-2 text-sm line-clamp-3">
                           {job.JobDescription?.length ? (job.JobDescription.length > 100 ? `${job.JobDescription.slice(0, 60)}...` : job.JobDescription) : "-"}
                         </p>
