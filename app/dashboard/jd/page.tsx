@@ -315,146 +315,147 @@ useEffect(() => {
         </h1>
       )}
       <HoverEffect
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-        items={filteredJobs.map((job) => ({
-          title: job.JobTitle,
-          description: `${job.ClientName || ""} | ${job.Location || ""} | ${
-            job.SalaryRange || ""
-          }`,
-          content: (
-            <div className="flex flex-col bg-white p-4 rounded-xl shadow-lg text-black h-[350px] relative">
-              {/* Top Section */}
-              <div className="flex justify-between items-start text-black">
-                <div>
-                  <h2 className="font-bold text-lg">{job.ClientName}</h2>
-                  <p className="text-lg mt-2 font-medium font-inter">
-                    {job.JobTitle}
-                  </p>
-                </div>
+  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 cursor-default"
+  items={filteredJobs.map((job) => ({
+    title: job.JobTitle,
+    description: `${job.ClientName || ""} | ${job.Location || ""} | ${
+      job.SalaryRange || ""
+    }`,
+    content: (
+      <div
+        className={`flex flex-col bg-white p-4 rounded-xl shadow-lg text-black h-[350px] relative cursor-default ${
+          job.JobTitle==="No Jobtile" || job.ClientName==="No Client Name" ? "border-2 border-red-500" : ""
+        }`}
+      >
+        {/* Top Section */}
+        <div className="flex justify-between items-start text-black">
+          <div>
+            <h2 className="font-bold text-lg">{job.ClientName}</h2>
+            <p className="text-lg mt-2 font-medium font-inter">
+              {job.JobTitle}
+            </p>
+          </div>
 
-                {editingJobId === job.id ? (
-                  <div className="flex flex-col gap-3 items-end">
-                    <div className="flex flex-wrap gap-2">
-                      <input
-                        type="number"
-                        min={0}
-                        className="border p-1 rounded w-20"
-                        value={tempOpeningPositions}
-                        onChange={(e) =>
-                          setTempOpeningPositions(Number(e.target.value))
-                        }
-                        autoFocus
-                      />
-                      <select
-                        value={tempStatus}
-                        onChange={(e) =>
-                          setTempStatus(e.target.value as "active" | "closed")
-                        }
-                        className="border p-1 rounded"
-                      >
-                        <option value="active">Active</option>
-                        <option value="closed">Closed</option>
-                      </select>
-                      <select
-                        value={tempPriority}
-                        onChange={(e) =>
-                          setTempPriority(
-                            e.target.value as "High" | "Medium" | "Low"
-                          )
-                        }
-                        className="border p-1 rounded"
-                      >
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                      </select>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleSaveEdit(job.id)}
-                        className="bg-blue-600 text-white px-3 py-1 rounded"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={cancelEditing}
-                        className="text-red-500 px-3 py-1 rounded border border-red-500"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className="cursor-pointer text-right"
-                    onClick={() => startEditing(job)}
-                  >
-                    <p>
-                      Openings:{" "}
-                      <span className="font-semibold">
-                        {job.openingPositions}
-                      </span>
-                    </p>
-                    <p>
-                      Status:{" "}
-                      <span
-                        className={
-                          job.status === "closed"
-                            ? "text-red-600 font-semibold"
-                            : "text-green-600 font-semibold"
-                        }
-                      >
-                        {job.status ?? "active"}
-                      </span>
-                    </p>
-                    <p>
-                      Priority:{" "}
-                      <span className="font-semibold">
-                        {job.priority ?? "Medium"}
-                      </span>
-                    </p>
-                  </div>
-                )}
+          {editingJobId === job.id ? (
+            <div className="flex flex-col gap-3 items-end">
+              <div className="flex flex-wrap gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  className="border p-1 rounded w-20"
+                  value={tempOpeningPositions}
+                  onChange={(e) =>
+                    setTempOpeningPositions(Number(e.target.value))
+                  }
+                  autoFocus
+                />
+                <select
+                  value={tempStatus}
+                  onChange={(e) =>
+                    setTempStatus(e.target.value as "active" | "closed")
+                  }
+                  className="border p-1 rounded"
+                >
+                  <option value="active">Active</option>
+                  <option value="closed">Closed</option>
+                </select>
+                <select
+                  value={tempPriority}
+                  onChange={(e) =>
+                    setTempPriority(e.target.value as "High" | "Medium" | "Low")
+                  }
+                  className="border p-1 rounded"
+                >
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
               </div>
-
-              
-              
-
-              {/* Job Info */}
-              <p className="text-sm mt-2 font-inter font-medium">
-                📍 {job.Location}
-              </p>
-              <p className="text-sm mt-2 font-inter font-medium">
-                💰 {job.SalaryRange}
-              </p>
-              <p className="text-gray-600 mt-2 text-sm line-clamp-3">
-                {job.JobDescription?.length
-                  ? job.JobDescription.length > 100
-                    ? `${job.JobDescription.slice(0, 60)}...`
-                    : job.JobDescription
-                  : "-"}
-              </p>
-
-              {/* Buttons at bottom */}
-              <div className="mt-auto flex justify-between">
-                <Button
-                  onClick={() => handleDelete(job.id)}
-                  size="sm"
-                  variant="destructive"
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleSaveEdit(job.id)}
+                  className="bg-blue-600 text-white px-3 py-1 rounded"
                 >
-                  Delete
-                </Button>
-                <Button
-                  onClick={() => router.push(`/dashboard/jd/${job.id}`)}
-                  size="sm"
+                  Save
+                </button>
+                <button
+                  onClick={cancelEditing}
+                  className="text-red-500 px-3 py-1 rounded border border-red-500"
                 >
-                  Edit / Details
-                </Button>
+                  Cancel
+                </button>
               </div>
             </div>
-          ),
-        }))}
-      />
+          ) : (
+            <div
+              className="cursor-pointer text-right"
+              onClick={() => startEditing(job)}
+            >
+              <p>
+                Openings:{" "}
+                <span className="font-semibold">
+                  {job.openingPositions}
+                </span>
+              </p>
+              <p>
+                Status:{" "}
+                <span
+                  className={
+                    job.status === "closed"
+                      ? "text-red-600 font-semibold"
+                      : "text-green-600 font-semibold"
+                  }
+                >
+                  {job.status ?? "active"}
+                </span>
+              </p>
+              <p>
+                Priority:{" "}
+                <span className="font-semibold">
+                  {job.priority ?? "Medium"}
+                </span>
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Job Info */}
+        <p className="text-sm mt-2 font-inter font-medium">
+          📍 {job.Location}
+        </p>
+        <p className="text-sm mt-2 font-inter font-medium">
+          💰 {job.SalaryRange}
+        </p>
+        <p className="text-gray-600 mt-2 text-sm line-clamp-3">
+          {job.JobDescription?.length
+            ? job.JobDescription.length > 100
+              ? `${job.JobDescription.slice(0, 60)}...`
+              : job.JobDescription
+            : "-"}
+        </p>
+
+        {/* Buttons at bottom */}
+        <div className="mt-auto flex justify-between ">
+          <Button
+            onClick={() => handleDelete(job.id)}
+            size="sm"
+            variant="destructive"
+            className="cursor-pointer"
+          >
+            Delete
+          </Button>
+          <Button
+            onClick={() => router.push(`/dashboard/jd/${job.id}`)}
+            size="sm"
+            className="cursor-pointer"
+          >
+            Edit / View
+          </Button>
+        </div>
+      </div>
+    ),
+  }))}
+/>
     </>
   )}
 </div>
