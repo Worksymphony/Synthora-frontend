@@ -35,6 +35,13 @@ type Job = {
   priority?: "High" | "Medium" | "Low";
   createdAt?: Timestamp;
 };
+
+// Define the new type for the grouped jobs
+type GroupedJob = {
+  letter: string;
+  jobs: Job[];
+};
+
 interface UserType {
   id: string;
   name?: string;
@@ -51,25 +58,26 @@ interface UserType {
 export default function Page() {
   const router = useRouter();
 
-  const [jobs, setJobs] = useState<Job[]>([]);
+  // Correct the useState type to use the new GroupedJob type
+  const [jobs, setJobs] = useState<GroupedJob[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading,setloading]=useState(true);
+  const [loading, setloading] = useState(true);
   const [newjd, setNewjd] = useState<any>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
-   const [userdata, setUserdata] = useState<UserType>()
+  const [userdata, setUserdata] = useState<UserType>();
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [tempOpeningPositions, setTempOpeningPositions] = useState(0);
   const [tempStatus, setTempStatus] = useState<"active" | "closed">("active");
   const [tempPriority, setTempPriority] = useState<"High" | "Medium" | "Low">("Medium");
 
   const handleModalToggle = () => setIsModalOpen(!isModalOpen);
-useEffect(() => {
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
       if (!user) {
         router.push("/login");
         return;
       }
-
       const docRef = doc(db, "users", user.uid);
       const docSnap = await getDoc(docRef);
 
@@ -79,23 +87,59 @@ useEffect(() => {
         setNewjd((prev: any) => ({ ...prev, companyId: userData.companyId }));
       }
     });
-    
+
     return () => unsubscribe();
   }, [router]);
-  // Fetch jobs safely
+
+  // Fetch jobs safely and perform sorting and grouping
   const getJobs = async () => {
     try {
-      setloading(true)
-      const res = await fetch("https://synthora-backend-production.up.railway.app/api/getjobdesc",{
-        method:"POST",
-         headers: {
-        "Content-Type": "application/json", // 👈 Add this line
-      },
-        body:JSON.stringify({companyId:userdata?.companyId})
+      setloading(true);
+      const res = await fetch("https://synthora-backend-production.up.railway.app/api/getjobdesc", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ companyId: userdata?.companyId }),
       });
       const data = await res.json();
-      setJobs(Array.isArray(data) ? data : []);
-      setloading(false)
+
+      if (Array.isArray(data)) {
+        // Sort the data first
+        const sortedJobs = [...data].sort((a, b) => {
+          const titleA = a.ClientName?.toUpperCase() || '';
+          const titleB = b.ClientName?.toUpperCase() || '';
+          if (titleA < titleB) {
+            return -1;
+          }
+          if (titleA > titleB) {
+            return 1;
+          }
+          return 0;
+        });
+
+        // Group the sorted data by the first letter of the job title
+        const groupedJobs = sortedJobs.reduce((acc, job) => {
+          const firstLetter = job.ClientName?.[0]?.toUpperCase() || '#';
+          if (!acc.has(firstLetter)) {
+            acc.set(firstLetter, []);
+          }
+          acc.get(firstLetter)?.push(job);
+          return acc;
+        }, new Map<string, Job[]>());
+
+        // Correct the error by asserting the type of the entries
+        const groupedArray = Array.from(groupedJobs.entries() as Iterable<[string, Job[]]>).map(([letter, jobs]) => ({
+          letter,
+          jobs
+        }));
+
+        setJobs(groupedArray); // Set the state with the grouped and sorted data
+      } else {
+        setJobs([]);
+      }
+
+      setloading(false);
     } catch (error) {
       console.error("Error fetching jobs:", error);
       setJobs([]);
@@ -103,14 +147,13 @@ useEffect(() => {
   };
 
   useEffect(() => {
-    if (userdata?.companyId) { // This check is the key!
-    getJobs();
-  }
+    if (userdata?.companyId) {
+      getJobs();
+    }
   }, [userdata]);
 
   // Submit new job
   const handleSubmitJob = async () => {
-    
     try {
       const uploadToastId = toast.loading("Uploading JD...");
       await fetch("https://synthora-backend-production.up.railway.app/api/job_description", {
@@ -118,12 +161,11 @@ useEffect(() => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newjd),
       });
-      
-      toast.success("Job Created Successfully!",{id:uploadToastId});
+      toast.success("Job Created Successfully!", { id: uploadToastId });
       getJobs();
       setNewjd({});
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast.error("Failed to create job");
     }
   };
@@ -155,7 +197,7 @@ useEffect(() => {
       setEditingJobId(null);
       getJobs();
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast.error("Error updating job");
     }
   };
@@ -171,17 +213,18 @@ useEffect(() => {
       toast.success("Job Deleted Successfully!");
       getJobs();
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast.error("Error deleting job");
     }
   };
 
-  // Filter jobs safely
-  const filteredJobs = (jobs || [])
-    .filter((job) =>
+  // Filter jobs safely - This part needs to be updated to handle the new grouped structure
+  const filteredJobs = (jobs || []).map(group => ({
+    ...group,
+    jobs: group.jobs.filter(job =>
       `${job.JobTitle} ${job.ClientName} ${job.Location}`.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    
+  })).filter(group => group.jobs.length > 0);
 
   return (
     <div className="p-6 space-y-6">
@@ -192,7 +235,9 @@ useEffect(() => {
           {/* Manual Create Job */}
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" className="bg-orange-500">Create Manually</Button>
+              <Button variant="outline" className="bg-orange-500">
+                Create Manually
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>
@@ -217,9 +262,7 @@ useEffect(() => {
                   min={1}
                   type="number"
                   value={newjd.openingPositions || ""}
-                  onChange={(e) =>
-                    setNewjd({ ...newjd, openingPositions: Number(e.target.value) })
-                  }
+                  onChange={(e) => setNewjd({ ...newjd, openingPositions: Number(e.target.value) })}
                   className="border rounded p-2 w-full"
                   required
                 />
@@ -265,200 +308,131 @@ useEffect(() => {
 
       {/* Search & Filter */}
       <div className="relative w-1/2 rounded-2xl overflow-hidden">
-  <div className="relative z-10 w-full">
-    <div className="relative rounded-2xl p-[2px] bg-gradient-to-r from-[#ff7b54] via-[#ffbe7b] to-[#ffde59] shadow-2xl">
-      <Input
-        placeholder="Search jobs, clients, or locations..."
-        className="
-          w-full h-11 py-4 pl-12 pr-6 text-lg rounded-2xl
-          bg-white/90 backdrop-blur-lg
-          border-none
-          placeholder-gray-400
-          focus:outline-none
-        "
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-      {/* Search Icon */}
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="absolute left-5 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-400 pointer-events-none"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z"
-        />
-      </svg>
-    </div>
-  </div>
-</div>
-
+        <div className="relative z-10 w-full">
+          <div className="relative rounded-2xl p-[2px] bg-gradient-to-r from-[#ff7b54] via-[#ffbe7b] to-[#ffde59] shadow-2xl">
+            <Input
+              placeholder="Search jobs, clients, or locations..."
+              className="
+                w-full h-11 py-4 pl-12 pr-6 text-lg rounded-2xl
+                bg-white/90 backdrop-blur-lg
+                border-none
+                placeholder-gray-400
+                focus:outline-none
+              "
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {/* Search Icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="absolute left-5 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-400 pointer-events-none"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z" />
+            </svg>
+          </div>
+        </div>
+      </div>
 
       {/* Jobs List */}
       <div className="max-w-12xl mx-auto ">
-  {loading ? (
-    <div className="flex items-center justify-center mt-24 h-full text-gray-500 space-x-1.5 font-semibold">
-      <span>Loading</span>
-      <span>Job</span>
-      <span>descriptions...</span>
-    </div>
-  ) : (
-    <>
-      {jobs.length === 0 && (
-        <h1 className="flex items-center justify-center mt-24 h-full text-gray-500 space-x-1.5 font-semibold">
-          No Job Openings
-        </h1>
-      )}
-      <HoverEffect
-  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 cursor-default"
-  items={filteredJobs.map((job) => ({
-    title: job.JobTitle,
-    description: `${job.ClientName || ""} | ${job.Location || ""} | ${
-      job.SalaryRange || ""
-    }`,
-    content: (
-      <div
-        className={`flex flex-col bg-white p-4 rounded-xl shadow-lg text-black h-[350px] relative cursor-default ${
-          job.JobTitle==="No Jobtile" || job.ClientName==="No Client Name" ? "border-2 border-red-500" : ""
-        }`}
-      >
-        {/* Top Section */}
-        <div className="flex justify-between items-start text-black">
-          <div>
-            <h2 className="font-bold text-lg">{job.ClientName}</h2>
-            <p className="text-lg mt-2 font-medium font-inter">
-              {job.JobTitle}
-            </p>
+        {loading ? (
+          <div className="flex items-center justify-center mt-24 h-full text-gray-500 space-x-1.5 font-semibold">
+            <span>Loading</span>
+            <span>Job</span>
+            <span>descriptions...</span>
           </div>
+        ) : (
+          <>
+            {jobs.length === 0 && (
+              <h1 className="flex items-center justify-center mt-24 h-full text-gray-500 space-x-1.5 font-semibold">
+                No Job Openings
+              </h1>
+            )}
+            {/* Render the grouped jobs */}
+            {filteredJobs.length===0 && <p className="text-sm text-gray-500 text-center mt-36">No job Found</p>}
+            {filteredJobs.map((group) => (
+              
+              <div key={group.letter}>
+                <h2 className="text-2xl font-bold mt-8 mb-4">{group.letter}</h2>
+                <HoverEffect
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 cursor-default"
+                  items={group.jobs.map((job) => ({
+                    title: job.JobTitle,
+                    description: `${job.ClientName || ""} | ${job.Location || ""} | ${job.SalaryRange || ""}`,
+                    content: (
+                      <div className={`flex flex-col bg-white p-4 rounded-xl shadow-lg text-black h-[350px] relative cursor-default ${job.JobTitle === "No Jobtile" || job.ClientName === "No Client Name" ? "border-2 border-red-500" : ""}`}>
+                        {/* Top Section */}
+                        <div className="flex justify-between items-start text-black">
+                          <div>
+                            <h2 className="font-bold text-lg">{job.ClientName}</h2>
+                            <p className="text-lg mt-2 font-medium font-inter">{job.JobTitle}</p>
+                          </div>
+                          {editingJobId === job.id ? (
+                            <div className="flex flex-col gap-3 items-end">
+                              <div className="flex flex-wrap gap-2">
+                                <input type="number" min={0} className="border p-1 rounded w-20" value={tempOpeningPositions} onChange={(e) => setTempOpeningPositions(Number(e.target.value))} autoFocus />
+                                <select value={tempStatus} onChange={(e) => setTempStatus(e.target.value as "active" | "closed")} className="border p-1 rounded">
+                                  <option value="active">Active</option>
+                                  <option value="closed">Closed</option>
+                                </select>
+                                <select value={tempPriority} onChange={(e) => setTempPriority(e.target.value as "High" | "Medium" | "Low")} className="border p-1 rounded">
+                                  <option value="High">High</option>
+                                  <option value="Medium">Medium</option>
+                                  <option value="Low">Low</option>
+                                </select>
+                              </div>
+                              <div className="flex gap-2">
+                                <button onClick={() => handleSaveEdit(job.id)} className="bg-blue-600 text-white px-3 py-1 rounded">
+                                  Save
+                                </button>
+                                <button onClick={cancelEditing} className="text-red-500 px-3 py-1 rounded border border-red-500">
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="cursor-pointer text-right" onClick={() => startEditing(job)}>
+                              <p>
+                                Openings: <span className="font-semibold">{job.openingPositions}</span>
+                              </p>
+                              <p>
+                                Status: <span className={job.status === "closed" ? "text-red-600 font-semibold" : "text-green-600 font-semibold"}>{job.status ?? "active"}</span>
+                              </p>
+                              <p>
+                                Priority: <span className="font-semibold">{job.priority ?? "Medium"}</span>
+                              </p>
+                            </div>
+                          )}
+                        </div>
 
-          {editingJobId === job.id ? (
-            <div className="flex flex-col gap-3 items-end">
-              <div className="flex flex-wrap gap-2">
-                <input
-                  type="number"
-                  min={0}
-                  className="border p-1 rounded w-20"
-                  value={tempOpeningPositions}
-                  onChange={(e) =>
-                    setTempOpeningPositions(Number(e.target.value))
-                  }
-                  autoFocus
+                        {/* Job Info */}
+                        <p className="text-sm mt-2 font-inter font-medium">📍 {job.Location}</p>
+                        <p className="text-sm mt-2 font-inter font-medium">💰 {job.SalaryRange}</p>
+                        <p className="text-gray-600 mt-2 text-sm line-clamp-3">
+                          {job.JobDescription?.length ? (job.JobDescription.length > 100 ? `${job.JobDescription.slice(0, 60)}...` : job.JobDescription) : "-"}
+                        </p>
+
+                        {/* Buttons at bottom */}
+                        <div className="mt-auto flex justify-between ">
+                          <Button onClick={() => handleDelete(job.id)} size="sm" variant="destructive" className="cursor-pointer">
+                            Delete
+                          </Button>
+                          <Button onClick={() => router.push(`/dashboard/jd/${job.id}`)} size="sm" className="cursor-pointer">
+                            Edit / View
+                          </Button>
+                        </div>
+                      </div>
+                    ),
+                  }))}
                 />
-                <select
-                  value={tempStatus}
-                  onChange={(e) =>
-                    setTempStatus(e.target.value as "active" | "closed")
-                  }
-                  className="border p-1 rounded"
-                >
-                  <option value="active">Active</option>
-                  <option value="closed">Closed</option>
-                </select>
-                <select
-                  value={tempPriority}
-                  onChange={(e) =>
-                    setTempPriority(e.target.value as "High" | "Medium" | "Low")
-                  }
-                  className="border p-1 rounded"
-                >
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </select>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleSaveEdit(job.id)}
-                  className="bg-blue-600 text-white px-3 py-1 rounded"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={cancelEditing}
-                  className="text-red-500 px-3 py-1 rounded border border-red-500"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div
-              className="cursor-pointer text-right"
-              onClick={() => startEditing(job)}
-            >
-              <p>
-                Openings:{" "}
-                <span className="font-semibold">
-                  {job.openingPositions}
-                </span>
-              </p>
-              <p>
-                Status:{" "}
-                <span
-                  className={
-                    job.status === "closed"
-                      ? "text-red-600 font-semibold"
-                      : "text-green-600 font-semibold"
-                  }
-                >
-                  {job.status ?? "active"}
-                </span>
-              </p>
-              <p>
-                Priority:{" "}
-                <span className="font-semibold">
-                  {job.priority ?? "Medium"}
-                </span>
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Job Info */}
-        <p className="text-sm mt-2 font-inter font-medium">
-          📍 {job.Location}
-        </p>
-        <p className="text-sm mt-2 font-inter font-medium">
-          💰 {job.SalaryRange}
-        </p>
-        <p className="text-gray-600 mt-2 text-sm line-clamp-3">
-          {job.JobDescription?.length
-            ? job.JobDescription.length > 100
-              ? `${job.JobDescription.slice(0, 60)}...`
-              : job.JobDescription
-            : "-"}
-        </p>
-
-        {/* Buttons at bottom */}
-        <div className="mt-auto flex justify-between ">
-          <Button
-            onClick={() => handleDelete(job.id)}
-            size="sm"
-            variant="destructive"
-            className="cursor-pointer"
-          >
-            Delete
-          </Button>
-          <Button
-            onClick={() => router.push(`/dashboard/jd/${job.id}`)}
-            size="sm"
-            className="cursor-pointer"
-          >
-            Edit / View
-          </Button>
-        </div>
+            ))}
+          </>
+        )}
       </div>
-    ),
-  }))}
-/>
-    </>
-  )}
-</div>
     </div>
-  )
+  );
 }
